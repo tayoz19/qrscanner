@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Scanner</title>
-    <!-- Загружаем библиотеку jsQR перед использованием -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.js"></script>
+    <script src="https://unpkg.com/qr-scanner/qr-scanner.min.js"></script>
 </head>
 <body>
     <h1>Сканирование QR-кода</h1>
@@ -16,37 +15,23 @@
         const videoElement = document.getElementById('scanner');
         const resultElement = document.getElementById('result');
 
-        // Получаем доступ к камере
+        // Запрашиваем доступ к камере
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(function(stream) {
-                videoElement.srcObject = stream;
-                videoElement.setAttribute("playsinline", true);
-                videoElement.play();
-                requestAnimationFrame(scanQRCode);
-            })
-            .catch(function(err) {
-                alert("Ошибка доступа к камере: " + err);
+          .then(function(stream) {
+            videoElement.srcObject = stream;
+            videoElement.setAttribute("playsinline", true); // Для работы в мобильных браузерах
+            videoElement.play();
+
+            // Создаем экземпляр сканера
+            const qrScanner = new QrScanner(videoElement, (result) => {
+                resultElement.textContent = "QR Code: " + result.data;
             });
 
-        // Функция сканирования QR-кода
-        function scanQRCode() {
-            const canvas = document.createElement("canvas");
-            const context = canvas.getContext("2d");
-
-            if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
-                canvas.height = videoElement.videoHeight;
-                canvas.width = videoElement.videoWidth;
-                context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                const qrCode = jsQR(imageData.data, canvas.width, canvas.height);
-
-                if (qrCode) {
-                    resultElement.textContent = "QR Code: " + qrCode.data;
-                    return;
-                }
-            }
-            requestAnimationFrame(scanQRCode);
-        }
+            qrScanner.start(); // Запускаем сканер
+          })
+          .catch(function(err) {
+            alert("Ошибка доступа к камере: " + err);
+          });
     </script>
 </body>
 </html>
